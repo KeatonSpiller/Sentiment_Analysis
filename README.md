@@ -1,3 +1,3 @@
 # Sentiment_Analysis
 
-Analyzing Tweets from twitter using the Tweepy, and NLTK libraries.
+Analyzing Tweets from twitter using Tweepy, and NLTK libraries.
