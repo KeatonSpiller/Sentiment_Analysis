@@ -1,0 +1,17 @@
+d{
+hat:1
+sandwich:2
+lemon:1
+orange:1
+snorkle:1
+}
+
+hat sandwich lemon  1/1  1/2 1/1  100  50 100   250/5 = 50%
+
+snorkle sandwich orange 1/1  1/2  1/1 100 50 100   250/5 = 50%
+
+p = word / count(individual word) * 100 / len(# of all words)
+
+
+
+
