@@ -40,3 +40,23 @@ Version 1.0.0 (01-10-2022)
 
 ## Security
     - may need to sensor the twitter data in future versions
+
+
+Version 1.0.1 (01-25-2022)
+
+## Changes 
+    - Updated File Structure of project
+        Sentiment_Analysis
+            Stock_Market
+                authentication
+                data
+                notebook
+                    TwitterBot.ipynb
+                src
+                    preparation
+                        tweepy_functions.py
+                        __init__.py
+                    __init__.py
+                __init__.py
+## New
+    - nested '__init__.py' files to organize tweepy_functions in preparation stage
