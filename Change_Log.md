@@ -60,3 +60,15 @@ Version 1.0.1 (01-25-2022)
                 __init__.py
 ## New
     - nested '__init__.py' files to organize tweepy_functions in preparation stage
+
+Version 1.0.2 (01-30-2022)
+## New
+
+    - Added Excel file to download any user in the file with correct twitter tag
+        Any column added will be downloaded as seperate csv files
+    - Cleaned up and seperated code, moving train functions into src directory
+
+## Changes 
+
+    - min max normalized the index funds and like/favorite counts
+    - predicted market for all index funds running seperate linear models
