@@ -209,100 +209,31 @@ def sentence_word_probability(all_word_count, series_text):
         
     return sentence_list, total_probability, individual_probability
 
-
-# infinite user download attempt
-# def infinite_user_download_helper(userID, group, oldest_id):
-#     if(oldest_id == None):
-#         tweets = api.user_timeline(screen_name=userID, 
-#                                 # 200 is the maximum allowed count
-#                                 count=200,
-#                                 include_rts = False,
-#                                 trim_user = False,
-#                                 tweet_mode = 'extended'
-#                                 )
-#         all_tweets = []
-#         all_tweets.extend(tweets)
-#         oldest_id = tweets[-1].id
-#     else:
-#         all_tweets = []
-#     while True:
-#         tweets = api.user_timeline(screen_name=userID, 
-#                             # 200 is the maximum allowed count
-#                             count=200,
-#                             include_rts = False,
-#                             max_id = oldest_id - 1,
-#                             trim_user = False,
-#                             tweet_mode = 'extended'
-#                             )
-#         if len(tweets) == 0:
-#             break
-#         oldest_id = tweets[-1].id
-#         all_tweets.extend(tweets)
-#         # print('N of tweets downloaded till now {}'.format(len(all_tweets)))
-        
-#     regex = "(@[A-Za-z0-9]+)|(\w+:\/\/\S+)"
-#     outtweets = []
-#     for idx,tweet in enumerate(all_tweets):
-#         # encode decode
-#         txt = tweet.full_text
-#         txt = txt.encode("utf-8").decode("utf-8")
-#         # remove @ and website links
-#         txt = ' '.join(re.sub(regex, " ", txt).split())
-#         # remove punctuation
-#         txt = re.sub(f"[{re.escape(punctuation)}]", "", txt)
-#         # remove non characters
-#         txt = re.sub(f"([^A-Za-z0-9\s]+)", "", txt)
-#         # store as a string
-#         txt = " ".join(txt.split())
-#         tweet_list = [
-#         tweet.id_str,
-#         tweet.created_at,
-#         tweet.favorite_count, 
-#         tweet.retweet_count,
-#         'https://twitter.com/i/web/status/' + tweet.id_str,
-#         txt 
-#         ]
-#         outtweets.append(tweet_list)
-#     df_temp = pd.DataFrame(outtweets, columns=['id','created_at','favorite_count',\
-#                                                 'retweet_count','url','text'])
+def download_todays_test(stock_list, df, df_merge):
+    # Extract today if weekday hours & Friday if Weekend
     
-#     # using dictionary to convert specific columns
-#     convert_dict = {'id': 'int64',
-#                     'created_at': 'datetime64[ns, UTC]',
-#                     'favorite_count': 'int64',
-#                     'retweet_count': 'int64',
-#                     'url': 'object',
-#                     'text': 'object'}
-#     df_temp = df_temp.astype(convert_dict)
+    stock_str = ' '.join( stock_list )
+    current_price = yf.download(stock_str, period='1m', interval = '1m')['Close']
+    current_price = current_price.loc[[current_price.index.max()]].reset_index('Datetime').rename(columns= {'Datetime':'date',
+                                                                                                            '^GSPC': 'SandP_500',
+                                                                                                            '^IXIC': 'NASDAQ',
+                                                                                                            '^RUT': 'RUSSEL',
+                                                                                                            '^DJI': 'DOW_JONES'})
+    current_price.date = current_price.date.dt.date
+    convert_dict = {'date': 'datetime64[ns]',
+                    'SandP_500': 'float64',
+                    'NASDAQ':'float64',
+                    'DOW_JONES': 'float64',
+                    'RUSSEL': 'float64'}
+    current_price = current_price.astype(convert_dict).set_index('date')
+    todays_data = df.loc[current_price.index[0] == df.index, :]
+    todays_test = pd.merge(current_price, todays_data, how='inner', on='date')
     
-#     path = f'../data/{group}'
-#     if not os.path.exists(path):
-#         os.makedirs(path)
-#     if(os.path.exists(path +'/'+ userID +'_twitter.csv')):
-#         df = pd.read_csv(path +'/'+ userID +'_twitter.csv').astype(convert_dict)
-#     else:
-#         df = pd.DataFrame()
-#     print(not df.equals(df_temp))
-#     if df_temp not in df:
-#         df = pd.concat([df_temp,df], axis = 0, join = 'outer',names=['id','created_at','favorite_count',\
-#                                                                      'retweet_count','url','text']).astype(convert_dict)
-#         df.to_csv(path +'/'+ userID +'_twitter.csv',index=False)
-#     else:
-#         print('duplicates exist')
-        
-#     oldest_date = df.created_at.min()
-#     # newest_date = df.created_at.max()
+    todays_test.DOW_JONES = (todays_test.DOW_JONES - df_merge.DOW_JONES.min()) / (df_merge.DOW_JONES.max() - df_merge.DOW_JONES.min())   
+    todays_test.SandP_500 = (todays_test.SandP_500 - df_merge.SandP_500.min()) / (df_merge.SandP_500.max() - df_merge.SandP_500.min())
+    todays_test.NASDAQ = (todays_test.NASDAQ - df_merge.NASDAQ.min()) / (df_merge.NASDAQ.max() - df_merge.NASDAQ.min())
+    todays_test.RUSSEL = (todays_test.RUSSEL - df_merge.RUSSEL.min()) / (df_merge.RUSSEL.max() - df_merge.RUSSEL.min())
+    todays_test.favorite_count = (todays_test.favorite_count - df_merge.favorite_count.min()) / (df_merge.favorite_count.max() - df_merge.favorite_count.min())
+    todays_test.retweet_count = (todays_test.retweet_count - df_merge.retweet_count.min()) / (df_merge.retweet_count.max() - df_merge.retweet_count.min())
     
-#     return oldest_id, oldest_date
-        
-# def infinite_user_download(user_list, group):
-#     try:
-#         for userID in user_list:
-#             oldest_id, oldest_date = infinite_user_download_helper(userID, group, oldest_id=None)
-#             for i in range(0,3):
-#                 oldest_id, oldest_date = infinite_user_download_helper(userID, group, oldest_id)
-#             print(f'{userID}: {i+1} iterations', end=' ')
-#     except Exception:
-#         print(f"Invalid user: {userID}")
-        
-# infinite_user_download(['jimcramer'], 'test') 
+    return todays_test
