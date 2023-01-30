@@ -112,7 +112,7 @@ def merge_files(group, display):
     
     # Creating path and saving to csv
     path_group_merge = f'../Sentiment_Analysis/Stock_Market/data/{group}/merge/'
-    path_merge = f'../Sentiment_Analysis/Stock_Market/data/merge/merged_twitter_analysts/'
+    path_merge = f'../Sentiment_Analysis/Stock_Market/data/merge/merged_twitter_users/'
     if not os.path.exists(path_group_merge):
         os.makedirs(path_group_merge)
     if not os.path.exists(path_merge):
@@ -148,10 +148,10 @@ def merge_all(group, display):
     print(f"size of merged data sets of {group.split('/')[1]}: {df.shape}")
     
     # Creating path and saving to csv
-    path_merge = f'../Sentiment_Analysis/Stock_Market/data/merge/all_merged_twitter_analysts'
+    path_merge = f'../Sentiment_Analysis/Stock_Market/data/merge/all_merged_twitter_users'
     if not os.path.exists(path_merge):
         os.makedirs(path_merge)
-    df.to_csv(path_merge +'/all_merged_twitter_analysts.csv',index=False)
+    df.to_csv(path_merge +'/all_merged_twitter_users.csv',index=False)
     
     return df
 
