@@ -42,8 +42,9 @@ def linear_model(df, split=0.20, summary = True):
         print(f"test mse: {test_mse}", end=" ")
         print(f"test rmse: {test_rmse}")
         print(lm.summary2())
-    
-    return lm
+    model = {'lm':lm, 'lm_train':lm_train, 'test_pred':test_pred,\
+            'test_rss':test_rss, 'test_mse':test_mse, 'test_rmse':test_rmse}
+    return model
 
 def naive_bayes(df, ticker, summary= True):
     df = create_target(day = 5, ticker = ticker )

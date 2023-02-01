@@ -68,6 +68,7 @@ def user_download_helper(api, userID, group):
                     'url': 'object',
                     'text': 'object'}
     df_temp = df_temp.astype(convert_dict)
+    df_temp.created_at = df_temp.created_at.dt.tz_convert('US/Eastern')
     
     path = f'../Sentiment_Analysis/Stock_Market/data/{group}'
     if not os.path.exists(path):
@@ -89,7 +90,6 @@ def merge_files(group, display):
     csv_files = glob.glob(os.path.join('../Sentiment_Analysis/Stock_Market/data'+"/"+group, "*.csv"))
     df = pd.DataFrame()
     convert_dict = {'id': 'int64',
-                        'created_at': 'datetime64[ns, UTC]',
                         'user':'object',
                         'favorite_count': 'int64',
                         'retweet_count': 'int64',
@@ -127,7 +127,6 @@ def merge_all(group, display):
     csv_files = glob.glob(os.path.join('../Sentiment_Analysis/Stock_Market/data'+"/"+group, "*.csv"))
     df = pd.DataFrame()
     convert_dict = {'id': 'int64',
-                        'created_at': 'datetime64[ns, UTC]',
                         'user':'object',
                         'favorite_count': 'int64',
                         'retweet_count': 'int64',
@@ -209,31 +208,35 @@ def sentence_word_probability(all_word_count, series_text):
         
     return sentence_list, total_probability, individual_probability
 
-def download_todays_test(stock_list, df, df_merge):
-    # Extract today if weekday hours & Friday if Weekend
+def normalize_columns(df, columns):
+    for c in columns:
+        df[c] = (df[c] - df[c].min()) / (df[c].max() - df[c].min())
+    return df 
+
+def normalize_columns_target(df, df_original, columns):
+    for c in columns:
+        df[c] = (df[c] - df_original[c].min()) / (df_original[c].max() - df_original[c].min())
+    return df 
+
+def download_todays_test(ticker_df, df_normalized, df_original):
+    # Download today's Index funds, and twitter probabilities
     
+    column_names = dict(zip(ticker_df.ticker_name, ticker_df.ticker_label))
+    column_names['Datetime']='date'
+    stock_list = list(ticker_df.ticker_name)
     stock_str = ' '.join( stock_list )
-    current_price = yf.download(stock_str, period='1m', interval = '1m')['Close']
-    current_price = current_price.loc[[current_price.index.max()]].reset_index('Datetime').rename(columns= {'Datetime':'date',
-                                                                                                            '^GSPC': 'SandP_500',
-                                                                                                            '^IXIC': 'NASDAQ',
-                                                                                                            '^RUT': 'RUSSEL',
-                                                                                                            '^DJI': 'DOW_JONES'})
-    current_price.date = current_price.date.dt.date
-    convert_dict = {'date': 'datetime64[ns]',
-                    'SandP_500': 'float64',
-                    'NASDAQ':'float64',
-                    'DOW_JONES': 'float64',
-                    'RUSSEL': 'float64'}
-    current_price = current_price.astype(convert_dict).set_index('date')
-    todays_data = df.loc[current_price.index[0] == df.index, :]
-    todays_test = pd.merge(current_price, todays_data, how='inner', on='date')
+    current_price = yf.download(stock_str, period='1m', interval = '1m', progress=False)['Close']
+    current_price = current_price.loc[[str(current_price.index.max())]].reset_index('Datetime').rename(columns= column_names)
     
-    todays_test.DOW_JONES = (todays_test.DOW_JONES - df_merge.DOW_JONES.min()) / (df_merge.DOW_JONES.max() - df_merge.DOW_JONES.min())   
-    todays_test.SandP_500 = (todays_test.SandP_500 - df_merge.SandP_500.min()) / (df_merge.SandP_500.max() - df_merge.SandP_500.min())
-    todays_test.NASDAQ = (todays_test.NASDAQ - df_merge.NASDAQ.min()) / (df_merge.NASDAQ.max() - df_merge.NASDAQ.min())
-    todays_test.RUSSEL = (todays_test.RUSSEL - df_merge.RUSSEL.min()) / (df_merge.RUSSEL.max() - df_merge.RUSSEL.min())
-    todays_test.favorite_count = (todays_test.favorite_count - df_merge.favorite_count.min()) / (df_merge.favorite_count.max() - df_merge.favorite_count.min())
-    todays_test.retweet_count = (todays_test.retweet_count - df_merge.retweet_count.min()) / (df_merge.retweet_count.max() - df_merge.retweet_count.min())
+    convert_dict = dict(zip(ticker_df.ticker_label, ['float64']*len(ticker_df.ticker_label)))
+    current_price = current_price.astype(convert_dict)
+    current_price.date = current_price.date.dt.date
+    current_price = current_price.astype({'date':'datetime64[ns]'}).set_index('date')
+    
+    todays_data = df_normalized.loc[df_normalized.index == str(current_price.index[0]),:]
+    
+    todays_test = pd.merge(current_price, todays_data, how='inner', on='date')
+    columns = list(ticker_df.ticker_label) + ['favorite_count', 'retweet_count']
+    todays_test = normalize_columns_target(todays_test.copy(), df_original.copy(), columns)
     
     return todays_test
