@@ -161,7 +161,7 @@ def strip_all_words(df, stop):
     s = df.text
     # lowercase
     s = s.str.lower()
-    # drop alphabet
+    # drop digit
     s = s.replace('[\d]+', '',regex=True)
     # remove stop words
     for i in stop :
@@ -225,7 +225,7 @@ def download_todays_test(ticker_df, df_normalized, df_original):
     column_names['Datetime']='date'
     stock_list = list(ticker_df.ticker_name)
     stock_str = ' '.join( stock_list )
-    current_price = yf.download(stock_str, period='1m', interval = '1m', progress=False)['Close']
+    current_price = yf.download(stock_str, period='1d', interval = '1m', progress=False)['Close']
     current_price = current_price.loc[[str(current_price.index.max())]].reset_index('Datetime').rename(columns= column_names)
     
     convert_dict = dict(zip(ticker_df.ticker_label, ['float64']*len(ticker_df.ticker_label)))
